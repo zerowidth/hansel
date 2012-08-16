@@ -1,6 +1,6 @@
 # hansel
 
-A Clojure library designed to ... well, that part is up to you.
+Pathfinding in clojure
 
 ## Usage
 
@@ -8,6 +8,6 @@ FIXME
 
 ## License
 
-Copyright © 2012 FIXME
+Copyright © 2012 Nathan Witmer
 
 Distributed under the Eclipse Public License, the same as Clojure.

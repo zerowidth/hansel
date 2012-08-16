@@ -1,7 +1,8 @@
 (ns hansel.core
   (:require [clojure.string :as str])
   (:use [clojure.pprint :only [pprint]]
-        [clojure.set :only [union]]))
+        [clojure.set :only [union]]
+        [clojure.data.priority-map :only [priority-map]]))
 
 (defn -main
   "I don't do a whole lot."
@@ -46,7 +47,7 @@
    :start start
    :dest dest
    :current start
-   :costs { start 0 }
+   :costs (priority-map start 0)
    :open #{}
    :closed #{}
    :paths {}})
@@ -56,25 +57,23 @@
    (if current
      (let [neighbors (remove closed (edges current))
            new-cost (inc (costs current))
-           lower-costs (apply merge (map (fn [node]
-                                               (if-let [node-cost (costs node)]
-                                                 (if (< new-cost node-cost)
-                                                   {node new-cost})
-                                                 {node new-cost}))
-                                             neighbors))
-           updated-paths (merge paths (zipmap (keys lower-costs) (repeat current)))
-           updated-costs (merge costs lower-costs)
+           lower-costs (remove nil? (map (fn [node]
+                                           (if-let [node-cost (costs node)]
+                                             (if (< new-cost node-cost)
+                                               [node new-cost])
+                                             [node new-cost]))
+                                         neighbors))
+           updated-paths (merge paths (zipmap
+                                        (map first lower-costs)
+                                        (repeat current)))
+           updated-costs (into costs lower-costs)
            visited (conj closed current)
-           next-available (select-keys
-                            updated-costs
-                            (remove visited (keys updated-costs)))
-           next-closest (first (first (sort-by (fn [[k v]] v) next-available)))]
+           next-closest (first (first (apply dissoc updated-costs visited)))]
        (assoc state
               :costs updated-costs
               :paths updated-paths
               :closed visited
-              :current next-closest)
-       )))
+              :current next-closest))))
 
 (defn path [state]
   (let [steps (reverse (take-while

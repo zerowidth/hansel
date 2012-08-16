@@ -44,44 +44,57 @@
 ; if destination visited, walk backward to roll up the path to the node
 ;
 
-(defn dijkstra
-  ([paths start dest]
-    (dijkstra {:paths paths
-               :start start
-               :dest dest
-               :current start
-               :costs { start 0 }
-               :open #{}
-               :closed #{}}))
-  ([{:keys [paths dest current open closed costs] :as state}]
-   (let [neighbors (remove closed (paths current))
-         new-cost (inc (costs current))
-         updated-costs (merge
-                         costs
-                         (apply merge (map (fn [node]
-                                           (if-let [node-cost (costs node)]
-                                             (if (< new-cost node-cost)
-                                               {node new-cost})
-                                             {node new-cost}))
-                                         neighbors)))
-         visited (conj closed current)
-         next-available (select-keys
-                          updated-costs
-                          (remove visited (keys updated-costs)))
-         next-closest (first (first (sort-by (fn [[k v]] v) next-available)))]
-     (assoc state
-            :costs updated-costs
-            :closed visited
-            :current next-closest))))
+(defn dijkstra-init [edges start dest]
+  {:edges edges
+   :start start
+   :dest dest
+   :current start
+   :costs { start 0 }
+   :open #{}
+   :closed #{}
+   :paths {}})
 
-; let  game ". . . . . # . z
-;            . . . . . # . .
-;            . . # . . # . .
-;            . . # . . . . .
-;            a . # . . . . ."
-(let [game ". . # . .
-           a . # . z
-           . . . . ."
+(defn dijkstra
+  [{:keys [edges dest current closed costs paths] :as state}]
+   (if current
+     (let [neighbors (remove closed (edges current))
+           new-cost (inc (costs current))
+           lower-costs (apply merge (map (fn [node]
+                                               (if-let [node-cost (costs node)]
+                                                 (if (< new-cost node-cost)
+                                                   {node new-cost})
+                                                 {node new-cost}))
+                                             neighbors))
+           updated-paths (merge paths (zipmap (keys lower-costs)
+                                              (repeatedly (constantly current))))
+           updated-costs (merge costs lower-costs)
+           visited (conj closed current)
+           next-available (select-keys
+                            updated-costs
+                            (remove visited (keys updated-costs)))
+           next-closest (first (first (sort-by (fn [[k v]] v) next-available)))]
+       (assoc state
+              :costs updated-costs
+              :paths updated-paths
+              :closed visited
+              :current next-closest)
+       )))
+
+(defn path [state]
+  (let [steps (reverse (take-while
+                         (complement nil?)
+                         (iterate (:paths state) (:dest state))))]
+    (if ((set steps) (:start state))
+      steps)))
+
+(let [game ". . . . . # . z
+           . . . . . # . .
+           . . # . . # . .
+           . . # . . . . .
+           a . # . . . . ."
+; (let [game ". . # . .
+;            a . # . z
+;            . . . . ."
       lines (->> game str/split-lines (map #(remove #{\space} %)))
       width (count (first lines))
       height (count lines)
@@ -105,8 +118,8 @@
                     (merge-with into index {a [b] b [a]}))
                   {}
                   (map seq edges))
-      dj (iterate dijkstra [paths start dest])
-      ]
-  (pprint (take 1 dj))
-  (pprint (take 2 dj))
+      dj (iterate dijkstra (dijkstra-init paths start dest))
+      steps (take-while (complement nil?) dj) ]
+  ; (pprint (last steps))
+  (pprint (path (last steps)))
   )

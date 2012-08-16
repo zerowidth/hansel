@@ -18,9 +18,6 @@
 ;
 ; a = start, z = finish
 
-(defn points-where [pred rows x y]
-  (pred ((vec (rows y)) x)))
-
 (defn neighbors [[x y]]
   (for [dx [-1 0 1]
         dy [-1 0 1]
@@ -65,8 +62,7 @@
                                                    {node new-cost})
                                                  {node new-cost}))
                                              neighbors))
-           updated-paths (merge paths (zipmap (keys lower-costs)
-                                              (repeatedly (constantly current))))
+           updated-paths (merge paths (zipmap (keys lower-costs) (repeat current)))
            updated-costs (merge costs lower-costs)
            visited (conj closed current)
            next-available (select-keys
@@ -87,39 +83,37 @@
     (if ((set steps) (:start state))
       steps)))
 
-(let [game ". . . . . # . z
-           . . . . . # . .
-           . . # . . # . .
-           . . # . . . . .
-           a . # . . . . ."
-; (let [game ". . # . .
-;            a . # . z
-;            . . . . ."
-      lines (->> game str/split-lines (map #(remove #{\space} %)))
+(let [the-map ". . . . . # . z
+              . . . . . # . .
+              . . # . . # . .
+              . . # . . . . .
+              a . # . . . . ."
+; (let [the-map ". . # . .
+;               a . # . z
+;               . . . . ."
+; (let [the-map "a # z"
+      lines (->> the-map str/split-lines (map #(remove #{\space} %)))
       width (count (first lines))
       height (count lines)
       rows (zipmap (range (count lines)) lines)
-      nodes (set (for [y (range height)
-                       x (range width)
-                       :when (points-where #{\. \a \z} rows x y)]
-                   [x y]))
-      start (first (for [x (range width)
-                         y (range height)
-                         :when (points-where #{\a} rows x y)
-                         ] [x y]))
-      dest (first (for [x (range width)
-                        y (range height)
-                        :when (points-where #{\z} rows x y)
-                        ] [x y]))
+      map-nodes (apply merge-with into (for [y (range height)
+                                             x (range width)
+                                             :let [c ((vec (rows y)) x)]
+                                             :when (#{\. \a \z} c)]
+                                         {c [[x y]]}))
+      start (first (map-nodes \a))
+      dest (first (map-nodes \z))
+      nodes (set (apply concat (vals map-nodes)))
       edges (set (for [node nodes
                        neighbor (neighbors-in node nodes)]
                    #{node neighbor}))
       paths (reduce (fn [index [a b]]
-                    (merge-with into index {a [b] b [a]}))
-                  {}
-                  (map seq edges))
+                      (merge-with into index {a [b] b [a]}))
+                    {}
+                    (map seq edges))
       dj (iterate dijkstra (dijkstra-init paths start dest))
-      steps (take-while (complement nil?) dj) ]
+      steps (take-while (complement nil?) dj)
+      ]
   ; (pprint (last steps))
   (pprint (path (last steps)))
   )

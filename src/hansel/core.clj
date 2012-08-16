@@ -57,12 +57,10 @@
    (if current
      (let [neighbors (remove closed (edges current))
            new-cost (inc (costs current))
-           lower-costs (remove nil? (map (fn [node]
-                                           (if-let [node-cost (costs node)]
-                                             (if (< new-cost node-cost)
-                                               [node new-cost])
-                                             [node new-cost]))
-                                         neighbors))
+           lower-costs (for [node neighbors
+                             :let [node-cost (costs node)]
+                             :when (or (nil? node-cost) (< new-cost node-cost))]
+                         [node new-cost])
            updated-paths (merge paths (zipmap
                                         (map first lower-costs)
                                         (repeat current)))
@@ -77,7 +75,7 @@
 
 (defn path [state]
   (let [steps (reverse (take-while
-                         (complement nil?)
+                         identity
                          (iterate (:paths state) (:dest state))))]
     (if ((set steps) (:start state))
       steps)))
@@ -111,7 +109,7 @@
                     {}
                     (map seq edges))
       dj (iterate dijkstra (dijkstra-init paths start dest))
-      steps (take-while (complement nil?) dj)
+      steps (take-while identity dj)
       ]
   ; (pprint (last steps))
   (pprint (path (last steps)))

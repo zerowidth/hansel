@@ -2,6 +2,7 @@
 /lib
 /classes
 /checkouts
+/resources/asset-cache
 pom.xml
 *.jar
 *.class

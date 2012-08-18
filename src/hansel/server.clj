@@ -1,6 +1,7 @@
 (ns hansel.server
   (:use [noir.core]
-        [ring.util.response :as response])
+        [ring.util.response :as response]
+        [dieter.core :only [asset-pipeline]])
   (:require [noir.server :as server]
             [noir.response]))
 
@@ -15,6 +16,7 @@
       resp)))
 
 (server/add-middleware wrap-request-logging)
+(server/add-middleware asset-pipeline)
 
 (defn start-server [port]
   (server/start port))

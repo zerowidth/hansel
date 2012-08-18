@@ -1,0 +1,16 @@
+/* svg styling */
+
+#grid-container {
+  margin-top: 20px;
+}
+
+#grid rect {
+  stroke: #CCC;
+  stroke-width: 1px;
+  fill: #FFF;
+  shape-rendering: crispEdges;
+}
+
+#grid rect.closed {
+  fill: #888;
+}

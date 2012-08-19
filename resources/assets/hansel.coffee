@@ -6,9 +6,11 @@ class Grid
   constructor: (@width, @height) ->
     @grid_size = 20
     @points = []
-    for x in [0...@width]
-      for y in [0...@height]
+    for y in [0...@height]
+      for x in [0...@width]
         @points.push [x,y,'open']
+    @points[ @height + 1 ][2] = 'start'
+    @points[ (@height * (@width - 2)) + (@width - 2) ][2] = 'dest'
     d3.select('#grid-container')
       .append('svg:svg')
       .append('svg:g')
@@ -16,12 +18,12 @@ class Grid
       .attr('id', 'grid')
 
     # mousedown handled only on the grid
-    $('body').mouseup =>
-      @drag = false
-      # console.log d3.select('#grid').selectAll('rect.closed').data().length
+    $('body').mouseup @mouseup
+
+  grid: -> d3.select('#grid')
 
   draw: ->
-    squares = d3.select('#grid').selectAll('rect').data(@points)
+    squares = @grid().selectAll('rect').data(@points)
 
     squares.enter()
       .append('rect')
@@ -37,16 +39,42 @@ class Grid
 
   mousedown: (d, i) =>
     square = d3.select(d3.event.target)
-    @drag = if square.classed('open') is true then 'open' else 'closed'
+    @drag = square.attr 'class'
     @mouseover d, i
+
+  mouseup: =>
+    # replace all other classes with 'start' or 'dest'
+    if @drag is 'start'
+      @grid().selectAll('rect.start').attr('class', 'start')
+    else if @drag is 'dest'
+      @grid().selectAll('rect.dest').attr('class', 'dest')
+
+    @drag = false
+    # console.log d3.select('#grid').selectAll('rect.closed').data().length
 
   mouseover: (d, i) =>
     square = d3.select(d3.event.target)
-    if @drag
-      if @drag is 'open' and square.classed('open')
-        @close square
-      else if @drag is 'closed' and square.classed('closed')
-        @open square
+    switch @drag
+      when 'open'
+        if square.classed('open')
+          @close square
+      when 'closed'
+        if square.classed('closed')
+          @open square
+      when 'start'
+        if not square.classed('dest')
+          before = @grid().selectAll('rect.start')
+          before.classed('start', false)
+          if before.attr('class') is ""
+            before.attr('class', 'open')
+          square.classed('start', true)
+      when 'dest'
+        if not square.classed('start')
+          before = @grid().selectAll('rect.dest')
+          before.classed('dest', false)
+          if before.attr('class') is ""
+            before.attr('class', 'open')
+          square.classed('dest', true)
 
   mouseout: (d, i) =>
     square = d3.select(d3.event.target)

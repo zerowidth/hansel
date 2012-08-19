@@ -14,3 +14,11 @@
 #grid rect.closed {
   fill: #888;
 }
+
+#grid rect.dest {
+  fill: #F88;
+}
+
+#grid rect.start {
+  fill: #8F8;
+}

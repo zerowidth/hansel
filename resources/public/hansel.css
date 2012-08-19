@@ -22,3 +22,13 @@
 #grid rect.start {
   fill: #8F8;
 }
+
+#paths line {
+  stroke: blue;
+  stroke-width: 2px;
+  stroke-linecap: round;
+}
+
+#arrowhead {
+  fill: blue;
+}

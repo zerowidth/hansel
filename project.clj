@@ -7,7 +7,8 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/data.priority-map "0.0.1"]
                  [noir "1.3.0-beta8"]
-                 [dieter "0.2.0"]]
+                 [dieter "0.2.0"]
+                 [ring-json-params "0.1.3"]]
   :profiles {:dev {:plugins [[lein-midje "2.0.0-SNAPSHOT"]]
                    :dependencies [[midje "1.4.0"]
                                   [com.stuartsierra/lazytest "1.2.3"]]}}

@@ -13,17 +13,30 @@ $ ->
 
   width = Math.floor(($('#grid-container').width()- 1) / 20)
 
-  grid = new Grid 20, width, 20
+  # grid = new Grid 20, width, 20
+  grid = new Grid 20, 5, 3
   grid.draw()
+  paths = new Paths 20
 
-  paths = new Paths 20, [
-    [[0,0],[0,1]],
-    [[0,0],[1,0]],
-    [[0,0],[1,1]],
-    [[2,2],[1,1]],
-    [[1,0],[1,1]]
-  ]
-  paths.draw()
+  $('#generate').submit ->
+    $.ajax(
+      $(this).attr('action'),
+      type: 'POST'
+      contentType: 'application/json'
+      dataType: 'json'
+      data: JSON.stringify({
+        start: grid.startNode()
+        dest: grid.destNode()
+        nodes: grid.openNodes()
+      })
+      success: (data) ->
+        paths.paths = data[0].paths
+        paths.draw()
+    )
+
+    false
+
+  $('#generate').fadeIn()
 
 class Grid
   constructor: (@grid_size, @width, @height) ->
@@ -41,6 +54,15 @@ class Grid
 
   grid: -> d3.select('#grid')
 
+  startNode: ->
+    ([x, y] for [x, y, c] in @points when c is "start")[0]
+
+  destNode: ->
+    ([x, y] for [x, y, c] in @points when c is "dest")[0]
+
+  openNodes: ->
+    ([x, y] for [x, y, c] in @points when c isnt "closed")
+
   draw: ->
     squares = @grid().selectAll('rect').data(@points)
 
@@ -52,7 +74,6 @@ class Grid
       .attr('height', @grid_size)
       .on('mousedown', @mousedown)
       .on('mouseover', @mouseover)
-      .on('mouseout', @mouseout)
 
     squares.attr('class', (d, i) -> d[2])
 
@@ -62,11 +83,14 @@ class Grid
     @mouseover d, i
 
   mouseup: =>
-    # replace all other classes with 'start' or 'dest'
     if @drag is 'start'
-      @grid().selectAll('rect.start').attr('class', 'start')
+      start = @grid().selectAll('rect.start')
+      start.attr('class', 'start')
+      start.datum()[2] = 'start'
     else if @drag is 'dest'
-      @grid().selectAll('rect.dest').attr('class', 'dest')
+      dest = @grid().selectAll('rect.dest')
+      dest.attr('class', 'dest')
+      dest.datum()[2] = 'dest'
 
     @drag = false
     # console.log @grid().selectAll('rect.closed').data().length
@@ -85,18 +109,15 @@ class Grid
           before = @grid().selectAll('rect.start')
           before.classed('start', false)
           if before.attr('class') is ""
-            before.attr('class', 'open')
+            @open before
           square.classed('start', true)
       when 'dest'
         if not square.classed('start')
           before = @grid().selectAll('rect.dest')
           before.classed('dest', false)
           if before.attr('class') is ""
-            before.attr('class', 'open')
+            @open before
           square.classed('dest', true)
-
-  mouseout: (d, i) =>
-    square = d3.select(d3.event.target)
 
   open: (selection) =>
     selection.attr('class', 'open')
@@ -128,7 +149,7 @@ class Paths
 
   # returns [ x1, y1, x2, y2 ]
   # path goes from center of node to a little before the center of the next
-  lineSegment: (d) => 
+  lineSegment: (d) =>
     [ [x1, y1], [x2, y2] ] = d
     dx = x2 - x1
     dy = y2 - y1
@@ -145,7 +166,7 @@ class Paths
 
 
   draw: ->
-    lines = @lines().selectAll('line').data(@paths)
+    lines = @lines().selectAll('line').data(@paths, JSON.stringify)
 
     lines.enter()
       .append('line')
@@ -155,4 +176,6 @@ class Paths
       .attr('y2', (d, i) => @lineSegment(d)[3])
       .attr('class', 'path')
       .attr('marker-end', 'url(#arrowhead)')
+    lines.exit()
+      .remove()
 

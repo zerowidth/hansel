@@ -1,6 +1,4 @@
-/* svg styling */
-
-#grid-container {
+body {
   margin-top: 20px;
 }
 
@@ -32,3 +30,4 @@
 #arrowhead {
   fill: blue;
 }
+

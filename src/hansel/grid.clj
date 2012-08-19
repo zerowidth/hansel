@@ -23,3 +23,13 @@
   [node nodes]
   (set (filter (reachable node nodes) (neighbors-for node))))
 
+(defn transitions-for
+  "Retrieve the grid-based transitions map for the given list of nodes"
+  [nodes]
+  (let [edges (set (for [node nodes
+                         neighbor (neighbors node nodes)]
+                     #{node neighbor}))]
+    (reduce (fn [index [a b]]
+              (merge-with into index {a [b] b [a]}))
+            {}
+            (map seq edges))))

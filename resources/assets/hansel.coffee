@@ -16,7 +16,10 @@ $ ->
   # grid = new Grid 20, width, 20
   grid = new Grid 20, 5, 3
   grid.draw()
+  grid.editable true
   paths = new Paths 20
+
+  playback = new Playback paths, grid
 
   $('#generate').submit ->
     $.ajax(
@@ -30,13 +33,91 @@ $ ->
         nodes: grid.openNodes()
       })
       success: (data) ->
-        paths.paths = data[data.length - 1].paths
-        paths.draw()
+        $('#generate').fadeOut( ->
+          $('#playback').fadeIn( ->
+            playback.reset(data)
+          )
+        )
     )
-
     false
 
   $('#generate').fadeIn()
+
+class Playback
+  constructor: (@paths, @grid) ->
+
+    $('#rewind').click @rewind
+    $('#step_back').click @step_back
+    $('#play').click @play
+    $('#pause').click @pause
+    $('#step_forward').click @step_forward
+    $('#fast_forward').click @fast_forward
+    $('#edit').click =>
+      @pause()
+      @paths.paths = []
+      @paths.draw()
+      @grid.editable true
+      $('#playback').fadeOut( -> $('#generate').fadeIn() )
+      false
+
+  reset: (@steps) ->
+    @grid.editable false
+    @step = 0
+    @update()
+    @play()
+
+  update: ->
+    progress = @step * 100 / @steps.length
+    $('#playback .progress .bar').css("width", "#{progress}%")
+    $('#progress').text("#{@step + 1}/#{@steps.length} steps")
+    @paths.paths = @steps[@step].paths
+    @paths.draw()
+
+  step_back: =>
+    @step -= 1 unless @step is 0
+    @pause()
+    @update()
+    false
+
+  step_forward: =>
+    @step += 1 unless @step is (@steps.length - 1)
+    @pause()
+    @update()
+    false
+
+  rewind: =>
+    @step = 0
+    @pause()
+    @update()
+    false
+
+  fast_forward: =>
+    @step = @steps.length - 1
+    @pause()
+    @update()
+    false
+
+  play: =>
+    if not @tick
+      @tick = setInterval @next_tick, 100
+      $('#play').hide()
+      $('#pause').show()
+    false
+
+  pause: =>
+    if @tick
+      clearInterval @tick
+      @tick = null
+      $('#play').show()
+      $('#pause').hide()
+    false
+
+  next_tick: =>
+    if @step is (@steps.length - 1)
+      @pause()
+    else
+      @step += 1
+      @update()
 
 class Grid
   constructor: (@grid_size, @width, @height) ->
@@ -51,6 +132,9 @@ class Grid
 
     # mousedown handled only on the grid
     $('body').mouseup @mouseup
+
+  # external toggle for whether the grid is editable or not
+  editable: (@edit) ->
 
   grid: -> d3.select('#grid')
 
@@ -78,11 +162,13 @@ class Grid
     squares.attr('class', (d, i) -> d[2])
 
   mousedown: (d, i) =>
+    return unless @edit
     square = d3.select(d3.event.target)
     @drag = square.attr 'class'
     @mouseover d, i
 
   mouseup: =>
+    return unless @edit
     if @drag is 'start'
       start = @grid().selectAll('rect.start')
       start.attr('class', 'start')
@@ -96,6 +182,7 @@ class Grid
     # console.log @grid().selectAll('rect.closed').data().length
 
   mouseover: (d, i) =>
+    return unless @edit
     square = d3.select(d3.event.target)
     switch @drag
       when 'open'

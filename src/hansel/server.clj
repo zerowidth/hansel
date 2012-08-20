@@ -40,7 +40,10 @@
   (let [final (last steps)
         path (dijkstra/path final)
         final-path (reverse-paths (partition 2 1 path))]
-    (concat steps (list (assoc final :paths final-path)))))
+    (concat steps (list (assoc final
+                               :paths final-path
+                               :open #{}
+                               :closed #{})))))
 
 (defpage [:post, "/paths"] {:strs [start dest nodes]}
          (let [transitions (grid/transitions-for (set nodes))
@@ -53,4 +56,4 @@
                munged (map #(assoc %
                                    :paths (reverse-paths (:paths %))
                                    :costs (seq (:costs %))) filtered)]
-           (response/json (drop 1 munged))))
+           (response/json munged)))

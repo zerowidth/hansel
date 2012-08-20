@@ -45,6 +45,7 @@
        (assoc state
               :costs updated-costs
               :paths updated-paths
+              :open (disj (set (keys updated-costs)) visited)
               :closed visited
               :current next-closest))))
 

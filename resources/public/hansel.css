@@ -2,22 +2,22 @@ body {
   margin-top: 20px;
 }
 
-#grid rect {
+rect {
   stroke: #CCC;
   stroke-width: 1px;
   fill: #FFF;
   shape-rendering: crispEdges;
 }
 
-#grid rect.closed {
+rect.blocked {
   fill: #888;
 }
 
-#grid rect.dest {
+rect.dest {
   fill: #F88;
 }
 
-#grid rect.start {
+rect.start {
   fill: #8F8;
 }
 

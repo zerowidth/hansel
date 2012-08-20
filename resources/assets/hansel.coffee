@@ -30,7 +30,7 @@ $ ->
       data: JSON.stringify({
         start: grid.startNode()
         dest: grid.destNode()
-        nodes: grid.openNodes()
+        nodes: grid.clearNodes()
       })
       success: (data) ->
         $('#generate').fadeOut( ->
@@ -121,11 +121,12 @@ class Playback
 
 class Grid
   constructor: (@grid_size, @width, @height) ->
+    @edit = true
 
     @points = []
     for y in [0...@height]
       for x in [0...@width]
-        @points.push [x,y,'open']
+        @points.push [x,y,'clear']
 
     @points[ @width + 1 ][2] = 'start'
     @points[ (@height - 2) * @width + (@width - 2) ][2] = 'dest'
@@ -144,8 +145,8 @@ class Grid
   destNode: ->
     ([x, y] for [x, y, c] in @points when c is "dest")[0]
 
-  openNodes: ->
-    ([x, y] for [x, y, c] in @points when c isnt "closed")
+  clearNodes: ->
+    ([x, y] for [x, y, c] in @points when c isnt "blocked")
 
   draw: ->
     squares = @grid().selectAll('rect').data(@points)
@@ -185,37 +186,37 @@ class Grid
     return unless @edit
     square = d3.select(d3.event.target)
     switch @drag
-      when 'open'
-        if square.classed('open')
-          @close square
-      when 'closed'
-        if square.classed('closed')
-          @open square
+      when 'clear'
+        if square.classed('clear')
+          @blockNode square
+      when 'blocked'
+        if square.classed('blocked')
+          @clearNode square
       when 'start'
         if not square.classed('dest')
           before = @grid().selectAll('rect.start')
           before.classed('start', false)
           if before.attr('class') is ""
-            @open before
+            @clearNode before
           square.classed('start', true)
       when 'dest'
         if not square.classed('start')
           before = @grid().selectAll('rect.dest')
           before.classed('dest', false)
           if before.attr('class') is ""
-            @open before
+            @clearNode before
           square.classed('dest', true)
 
-  open: (selection) =>
-    selection.attr('class', 'open')
+  clearNode: (selection) =>
+    selection.attr('class', 'clear')
     d = selection.datum()
-    d[2] = 'open'
+    d[2] = 'clear'
     selection.datum(d)
 
-  close: (selection) =>
-    selection.attr('class', 'closed')
+  blockNode: (selection) =>
+    selection.attr('class', 'blocked')
     d = selection.datum()
-    d[2] = 'closed'
+    d[2] = 'blocked'
     selection.datum(d)
 
 class Paths

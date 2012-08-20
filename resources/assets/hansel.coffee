@@ -30,7 +30,7 @@ $ ->
         nodes: grid.openNodes()
       })
       success: (data) ->
-        paths.paths = data[0].paths
+        paths.paths = data[data.length - 1].paths
         paths.draw()
     )
 

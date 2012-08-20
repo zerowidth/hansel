@@ -33,13 +33,23 @@
   [paths]
   (map (fn [[k v]] [v k]) paths))
 
+(defn- final-state
+  "adds a final state with a paths filtered to only include final path nodes,
+  if the path exists"
+  [steps]
+  (let [final (last steps)
+        path (dijkstra/path final)
+        final-path (reverse-paths (partition 2 1 path))]
+    (concat steps (list (assoc final :paths final-path)))))
+
 (defpage [:post, "/paths"] {:strs [start dest nodes]}
          (let [transitions (grid/transitions-for (set nodes))
                steps (dijkstra/dijkstra {:start start
                                          :dest dest
                                          :transitions transitions})
+               with-final (final-state steps)
                filtered (map #(select-keys % [:open :closed :current :costs :paths])
-                             steps)
+                             with-final)
                munged (map #(assoc %
                                    :paths (reverse-paths (:paths %))
                                    :costs (seq (:costs %))) filtered)]

@@ -39,7 +39,9 @@
                                         (repeat current)))
            updated-costs (into costs lower-costs)
            visited (conj closed current)
-           next-closest (first (first (apply dissoc updated-costs visited)))]
+           next-closest (if (visited dest)
+                          nil
+                          (first (first (apply dissoc updated-costs visited))))]
        (assoc state
               :costs updated-costs
               :paths updated-paths

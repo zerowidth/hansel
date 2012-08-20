@@ -21,14 +21,27 @@ rect.start {
   fill: #8F8;
 }
 
+rect.current {
+  fill: #FF8;
+  stroke: #FF8;
+}
+
+rect.open {
+  fill: #BBF;
+}
+
+rect.closed {
+  fill: #BBC;
+}
+
 #paths line {
-  stroke: blue;
+  stroke: #44F;
   stroke-width: 2px;
   stroke-linecap: round;
 }
 
 #arrowhead {
-  fill: blue;
+  fill: #44F;
 }
 
 .progress .bar {

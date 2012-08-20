@@ -9,17 +9,22 @@ $ ->
 
   container.append('svg:g')
     .attr('transform', 'translate(1,1)')
+    .attr('id', 'node_vis')
+    .attr('style', 'display:none')
+
+  container.append('svg:g')
+    .attr('transform', 'translate(1,1)')
     .attr('id', 'paths')
+    .attr('style', 'display:none')
 
   width = Math.floor(($('#grid-container').width()- 1) / 20)
 
-  # grid = new Grid 20, width, 20
-  grid = new Grid 20, 5, 3
+  window.grid = new Grid 20, width, 10
   grid.draw()
-  grid.editable true
-  paths = new Paths 20
+  window.paths = new Paths 20
+  window.nodes = new NodeVisualization 20
 
-  playback = new Playback paths, grid
+  window.playback = new Playback grid, paths, nodes
 
   $('#generate').submit ->
     $.ajax(
@@ -32,19 +37,36 @@ $ ->
         dest: grid.destNode()
         nodes: grid.clearNodes()
       })
+      beforeSend: ->
+        $('#generate button').hide()
+        $('#generate p').show()
+      complete: ->
+        $('#generate button').show()
+        $('#generate p').hide()
       success: (data) ->
-        $('#generate').fadeOut( ->
-          $('#playback').fadeIn( ->
-            playback.reset(data)
-          )
-        )
+        $('#generate').hide()
+        $('#playback').fadeIn ->
+          grid.editable false
+          playback.reset(data)
+          $('#paths').fadeIn()
+          $('#node_vis').fadeIn()
     )
+    false
+
+  $('#edit').click =>
+    playback.pause()
+    grid.editable true
+    $('#playback').hide()
+    $('#playback .progress .bar').css("width", "0%")
+    $('#generate').fadeIn()
+    $('#paths').fadeOut()
+    $('#node_vis').fadeOut()
     false
 
   $('#generate').fadeIn()
 
 class Playback
-  constructor: (@paths, @grid) ->
+  constructor: (@grid, @paths, @node_vis) ->
 
     $('#rewind').click @rewind
     $('#step_back').click @step_back
@@ -52,16 +74,8 @@ class Playback
     $('#pause').click @pause
     $('#step_forward').click @step_forward
     $('#fast_forward').click @fast_forward
-    $('#edit').click =>
-      @pause()
-      @paths.paths = []
-      @paths.draw()
-      @grid.editable true
-      $('#playback').fadeOut( -> $('#generate').fadeIn() )
-      false
 
   reset: (@steps) ->
-    @grid.editable false
     @step = 0
     @update()
     @play()
@@ -72,6 +86,9 @@ class Playback
     $('#progress').text("#{@step + 1}/#{@steps.length} steps")
     @paths.paths = @steps[@step].paths
     @paths.draw()
+
+    data = @steps[@step]
+    @node_vis.update @grid.startNode(), @grid.destNode(), data.current, data.open, data.closed
 
   step_back: =>
     @step -= 1 unless @step is 0
@@ -99,7 +116,7 @@ class Playback
 
   play: =>
     if not @tick
-      @tick = setInterval @next_tick, 100
+      @tick = setInterval @next_tick, 50
       $('#play').hide()
       $('#pause').show()
     false
@@ -149,7 +166,7 @@ class Grid
     ([x, y] for [x, y, c] in @points when c isnt "blocked")
 
   draw: ->
-    squares = @grid().selectAll('rect').data(@points)
+    squares = @grid().selectAll('rect').data(@points, (d) -> [d[0], d[1]] )
 
     squares.enter()
       .append('rect')
@@ -218,6 +235,43 @@ class Grid
     d = selection.datum()
     d[2] = 'blocked'
     selection.datum(d)
+
+class NodeVisualization
+  constructor: (@grid_size) ->
+
+  viz: ->
+    d3.select("#node_vis")
+
+  update: (@start, @dest, @current, @open, @closed) ->
+    points = []
+
+    # later points override earlier ones
+
+    if @open
+      points = points.concat _.map @open, (o) -> [o[0], o[1], 'open']
+
+    if @closed
+      points = points.concat _.map @closed, (o) -> [o[0], o[1], 'closed']
+
+    points.push [@start[0], @start[1], 'start']
+    points.push [@dest[0], @dest[1], 'dest']
+
+    if @current
+      points.push [@current[0], @current[1], 'current']
+
+
+    squares = @viz().selectAll('rect').data(points, (d) -> [d[0], d[1]] )
+
+    squares.enter()
+      .append('rect')
+      .attr('x', (d, i) => d[0] * @grid_size)
+      .attr('y', (d, i) => d[1] * @grid_size)
+      .attr('width', @grid_size)
+      .attr('height', @grid_size)
+
+    squares.exit().remove()
+
+    squares.attr('class', (d, i) -> d[2])
 
 class Paths
   constructor: (@grid_size, @paths) ->

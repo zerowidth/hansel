@@ -4,6 +4,7 @@
         [ring.middleware.json-params :only [wrap-json-params]])
   (:require [hansel.grid :as grid]
             [hansel.dijkstra :as dijkstra]
+            [hansel.astar :as astar]
             [noir.server :as server]
             [ring.util.response :as ring-response]
             [noir.response :as response]
@@ -47,7 +48,7 @@
 
 (defpage [:post, "/paths"] {:strs [start dest nodes]}
          (let [transitions (grid/transitions-for (set nodes))
-               steps (dijkstra/dijkstra {:start start
+               steps (astar/astar {:start start
                                          :dest dest
                                          :transitions transitions})
                with-final (final-state steps)

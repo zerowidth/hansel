@@ -2,7 +2,8 @@
   (:require [clojure.string :as str])
   (:use [hansel.server :only [start-server]]
         [hansel.text-interface :only [graph-from-text]]
-        [hansel.dijkstra :only [path dijkstra]]))
+        [hansel.dijkstra :only [path dijkstra]]
+        [hansel.astar :only [astar]]))
 
 (defn -main
   "I don't do a whole lot."
@@ -11,9 +12,9 @@
 
 (defn solve [the-map]
   (let [graph (graph-from-text the-map)
-        steps (dijkstra graph)]
     (prn (count steps))
     (prn (path (last steps)))))
+        steps (astar graph)]
 
 ; (solve ". . . . . # . z
 ;        . . . . . # . .

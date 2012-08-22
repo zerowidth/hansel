@@ -68,6 +68,8 @@ $ ->
 class Playback
   constructor: (@grid, @paths, @node_vis) ->
 
+    @scrubbing = false
+
     $('#rewind').click @rewind
     $('#step_back').click @step_back
     $('#play').click @play
@@ -75,13 +77,17 @@ class Playback
     $('#step_forward').click @step_forward
     $('#fast_forward').click @fast_forward
 
+    $('body').mouseup @mouseup
+    $('#scrub').mousedown @mousedown
+    $('#scrub').mousemove @scrub
+
   reset: (@steps) ->
     @step = 0
     @update()
     @play()
 
   update: ->
-    progress = @step * 100 / @steps.length
+    progress = @step * 100 / (@steps.length - 1)
     $('#playback .progress .bar').css("width", "#{progress}%")
     $('#progress').text("#{@step + 1}/#{@steps.length} steps")
     @paths.paths = @steps[@step].paths
@@ -128,6 +134,19 @@ class Playback
       $('#play').show()
       $('#pause').hide()
     false
+
+  mouseup: =>
+    @scrubbing = false
+
+  mousedown: (e) =>
+    @scrubbing = true
+    @scrub e
+
+  scrub: (e) =>
+    if @scrubbing
+      @pause()
+      @step = Math.floor @steps.length * e.offsetX / $('#scrub').width()
+      @update()
 
   next_tick: =>
     if @step is (@steps.length - 1)

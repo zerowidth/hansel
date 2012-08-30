@@ -23,10 +23,10 @@
    :costs (priority-map start 0)
    :open #{}
    :closed #{}
-   :paths {}})
+   :parents {}})
 
 (defn- dijkstra-step
-  [{:keys [transitions dest current closed costs paths] :as state}]
+  [{:keys [transitions dest current closed costs parents] :as state}]
    (if current
      (let [neighbors (remove closed (transitions current))
            new-cost (inc (costs current))
@@ -34,7 +34,7 @@
                              :let [node-cost (costs node)]
                              :when (or (nil? node-cost) (< new-cost node-cost))]
                          [node new-cost])
-           updated-paths (merge paths (zipmap
+           updated-parents (merge parents (zipmap
                                         (map first lower-costs)
                                         (repeat current)))
            updated-costs (into costs lower-costs)
@@ -44,7 +44,7 @@
                           (first (first (apply dissoc updated-costs visited))))]
        (assoc state
               :costs updated-costs
-              :paths updated-paths
+              :parents updated-parents
               :open (disj (set (keys updated-costs)) visited)
               :closed visited
               :current next-closest))))
@@ -52,11 +52,9 @@
 (defn path [state]
   "Return the calculated path given a state. Returns a sequence of nodes if
   there is a path from start to dest, nil if no path exists."
-  (let [steps (reverse (take-while
-                         identity
-                         (iterate (:paths state) (:dest state))))]
+  (let [steps (take-while identity (iterate (:parents state) (:dest state)))]
     (if ((set steps) (:start state))
-      steps)))
+      (reverse steps))))
 
 (defn dijkstra
   "Return a lazy sequence of states for dijkstra's algorithm, given a set of

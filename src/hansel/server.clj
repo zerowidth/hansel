@@ -42,7 +42,7 @@
         path (dijkstra/path final)
         final-path (reverse-paths (partition 2 1 path))]
     (concat steps (list (assoc final
-                               :paths final-path
+                               :parents final-path
                                :open #{}
                                :closed #{})))))
 
@@ -52,9 +52,9 @@
                                          :dest dest
                                          :transitions transitions})
                with-final (final-state steps)
-               filtered (map #(select-keys % [:open :closed :current :costs :paths])
+               filtered (map #(select-keys % [:open :closed :current :costs :parents])
                              with-final)
                munged (map #(assoc %
-                                   :paths (reverse-paths (:paths %))
+                                   :paths (reverse-paths (:parents %))
                                    :costs (seq (:costs %))) filtered)]
            (response/json munged)))

@@ -21,10 +21,11 @@
 
         <div class="span4">
 
-          <form class="well" id="generate" action="/paths" style="display:none;">
-            <button class="btn btn-primary">Find path</button>
+          <div id="buttons" class="well" style="display:none">
+            <button id="generate" class="btn btn-primary"><i class="icon-ok icon-white"></i> Find path</button>
+            <button id="clear" class="btn"><i class="icon-remove"></i> Clear</button>
             <p class="processing" style="display:none;">Processing...</p>
-          </form>
+          </div>
 
           <div class="well" id="playback" style="display:none;">
             <p id="progress">50/100 steps</p>
@@ -33,7 +34,7 @@
             </div>
             <div class="btn-toolbar">
               <div class="btn-group">
-                <a href="#" id="edit" class="btn"><i class="icon-edit"></i> edit</a>
+                <a href="#" id="edit" class="btn"><i class="icon-edit"></i> Edit</a>
               </div>
               <div class="btn-group">
                 <a class="btn" id="rewind" href="#"><i class="icon-fast-backward"></i></a>

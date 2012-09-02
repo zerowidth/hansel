@@ -26,9 +26,9 @@ $ ->
 
   window.playback = new Playback grid, paths, nodes
 
-  $('#generate').submit ->
+  $('#generate').click ->
     $.ajax(
-      $(this).attr('action'),
+      "/paths",
       type: 'POST'
       contentType: 'application/json'
       dataType: 'json'
@@ -38,13 +38,13 @@ $ ->
         nodes: grid.clearNodes()
       })
       beforeSend: ->
-        $('#generate button').hide()
-        $('#generate p').show()
+        $('#buttons button').hide()
+        $('#buttons p').show()
       complete: ->
-        $('#generate button').show()
-        $('#generate p').hide()
+        $('#buttons button').show()
+        $('#buttons p').hide()
       success: (data) ->
-        $('#generate').hide()
+        $('#buttons').hide()
         $('#playback').fadeIn ->
           grid.editable false
           playback.reset(data)
@@ -53,17 +53,20 @@ $ ->
     )
     false
 
+  $('#clear').click ->
+    grid.clear()
+
   $('#edit').click =>
     playback.pause()
     grid.editable true
     $('#playback').hide()
     $('#playback .progress .bar').css("width", "0%")
-    $('#generate').fadeIn()
+    $('#buttons').fadeIn()
     $('#paths').fadeOut()
     $('#node_vis').fadeOut()
     false
 
-  $('#generate').fadeIn()
+  $('#buttons').fadeIn()
 
 class Playback
   constructor: (@grid, @paths, @node_vis) ->
@@ -169,6 +172,11 @@ class Grid
 
     # mousedown handled only on the grid
     $('body').mouseup @mouseup
+
+  # clear the nodes and redraw the grid
+  clear: ->
+    @points = ([x, y, (if c is "blocked" then "clear" else c)] for [x, y, c] in @points)
+    @draw()
 
   # external toggle for whether the grid is editable or not
   editable: (@edit) ->
@@ -278,7 +286,6 @@ class NodeVisualization
     if @current
       points.push [@current[0], @current[1], 'current']
 
-
     squares = @viz().selectAll('rect').data(points, (d) -> [d[0], d[1]] )
 
     squares.enter()
@@ -324,7 +331,6 @@ class Paths
       y1 * @grid_size + @grid_size / 2,
       x2 * @grid_size + @grid_size / 2,
       y2 * @grid_size + @grid_size / 2 ]
-
 
   draw: ->
     lines = @lines().selectAll('line').data(@paths, JSON.stringify)

@@ -26,14 +26,7 @@
                                            {c [[x y]]}))
         start (first (map-nodes \a))
         dest (first (map-nodes \z))
-        nodes (set (apply concat (vals map-nodes)))
-        edges (set (for [node nodes
-                         neighbor (neighbors node nodes)]
-                     #{node neighbor}))
-        transitions (reduce (fn [index [a b]]
-                              (merge-with into index {a [b] b [a]}))
-                            {}
-                            (map seq edges))]
+        nodes (set (apply concat (vals map-nodes)))]
       {:start start
        :dest dest
-       :transitions transitions}))
+       :nodes nodes}))

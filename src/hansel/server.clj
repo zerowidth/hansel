@@ -47,10 +47,9 @@
                                :closed #{})))))
 
 (defpage [:post, "/paths"] {:strs [start dest nodes]}
-         (let [transitions (grid/transitions-for (set nodes))
-               steps (astar/astar {:start start
-                                         :dest dest
-                                         :transitions transitions})
+         (let [steps (astar/astar {:start start
+                                   :dest dest
+                                   :nodes nodes})
                with-final (final-state steps)
                filtered (map #(select-keys % [:open :closed :current :costs :parents])
                              with-final)

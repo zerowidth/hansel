@@ -1,29 +1,28 @@
 (ns hansel.astar
+  (:require [hansel.grid :as grid])
   (:use [clojure.data.priority-map :only [priority-map]]))
 
-(defn- chebychev [[ax ay] [bx by]]
-  (Math/max (Math/abs (- bx ax)) (Math/abs (- by ay))))
-
-(defn- init [transitions start dest]
-  {:transitions transitions
+(defn- init [nodes start dest cost-fn]
+  {:neighbors (partial grid/neighbors (set nodes))
+   :cost-fn cost-fn
    :start start
    :dest dest
    :current start
-   :f-scores (priority-map start (chebychev start dest))
+   :f-scores (priority-map start (cost-fn start dest))
    :g-scores {start 0}
    :open #{start}
    :closed #{}
    :parents {}})
 
 (defn- calculate-new-costs
-  [{:keys [transitions g-scores closed current dest] :as state}]
-  (let [new-g (inc (g-scores current))]
-    (assoc state
-           :updates
-           (for [node (remove closed (transitions current))
-                 :let [node-g (g-scores node)]
-                 :when (or (nil? node-g) (< new-g node-g))]
-             {:node node :g new-g :f (+ new-g (* 1.001 (chebychev node dest)))}))))
+  [{:keys [neighbors g-scores closed current dest cost-fn] :as state}]
+  (assoc state
+         :updates
+         (for [node (remove closed (neighbors current))
+               :let [node-g (g-scores node)
+                     new-g (+ (g-scores current) (cost-fn current node))]
+               :when (or (nil? node-g) (< new-g node-g))]
+           {:node node :g new-g :f (+ new-g (* 1.001 (cost-fn node dest)))})))
 
 (defn- update-parents
   [{:keys [parents current updates] :as state}]
@@ -68,8 +67,8 @@
       next-closest-as-current)))
 
 (defn astar
-  "Return a lazy sequence of states for the A* algorithm, given a set of node
-  transitions, a starting node, and a destination node."
-  [{:keys [transitions start dest]}]
-  (take-while identity (iterate step (init transitions start dest))))
+  "Return a lazy sequence of states for the A* algorithm, given a set of nodes,
+  a starting node, and a destination node."
+  [{:keys [nodes start dest cost-fn] :or {cost-fn grid/weighted-chebychev} :as args}]
+  (take-while identity (iterate step (init nodes start dest cost-fn))))
 

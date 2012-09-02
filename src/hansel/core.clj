@@ -6,7 +6,7 @@
         [hansel.astar :only [astar]]))
 
 (defn -main
-  "I don't do a whole lot."
+  "Start the web app"
   [& args]
   (start-server 8080))
 

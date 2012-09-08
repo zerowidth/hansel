@@ -29,31 +29,36 @@
 
 (defpage "/" [] (ring-response/resource-response "public/index.html"))
 
-(defn- reverse-paths
-  "reverse the given map of paths into a sequence of [val, key]"
-  [paths]
-  (map (fn [[k v]] [v k]) paths))
+(defn- reverse-parents
+  "reverse the given map of parents into a sequence of [val, key]"
+  [parents]
+  (map (fn [[k v]] [v k]) parents))
 
-(defn- final-state
+(defn- add-final-state
   "adds a final state with a paths filtered to only include final path nodes,
   if the path exists"
   [steps]
   (let [final (last steps)
         path (dijkstra/path final)
-        final-path (reverse-paths (partition 2 1 path))]
+        final-path (reverse-parents (partition 2 1 path))]
     (concat steps (list (assoc final
                                :parents final-path
                                :open #{}
                                :closed #{})))))
 
+(defn- calculate-paths [step]
+  (assoc step :paths (reverse-parents (:parents step))))
+
+(defn- filter-keys-for-presentation
+  [steps]
+  (map #(select-keys % [:open :closed :current :paths]) steps))
+
 (defpage [:post, "/paths"] {:strs [start dest nodes]}
-         (let [steps (astar/astar {:start start
-                                   :dest dest
-                                   :nodes nodes})
-               with-final (final-state steps)
-               filtered (map #(select-keys % [:open :closed :current :costs :parents])
-                             with-final)
-               munged (map #(assoc %
-                                   :paths (reverse-paths (:parents %))
-                                   :costs (seq (:costs %))) filtered)]
-           (response/json munged)))
+         (response/json (->>
+                          {:start start
+                           :dest dest
+                           :nodes nodes}
+                          astar/astar
+                          add-final-state
+                          (map calculate-paths)
+                          filter-keys-for-presentation)))

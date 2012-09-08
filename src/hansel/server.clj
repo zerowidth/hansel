@@ -3,7 +3,7 @@
         [dieter.core :only [asset-pipeline]]
         [ring.middleware.json-params :only [wrap-json-params]])
   (:require [hansel.grid :as grid]
-            [hansel.dijkstra :as dijkstra]
+            [hansel.util :as util]
             [hansel.astar :as astar]
             [noir.server :as server]
             [ring.util.response :as ring-response]
@@ -39,8 +39,7 @@
   if the path exists"
   [steps]
   (let [final (last steps)
-        path (dijkstra/path final)
-        final-path (reverse-parents (partition 2 1 path))]
+        final-path (->> final util/path (partition 2 1) reverse-parents)]
     (concat steps (list (assoc final
                                :parents final-path
                                :open #{}
@@ -53,12 +52,24 @@
   [steps]
   (map #(select-keys % [:open :closed :current :paths]) steps))
 
-(defpage [:post, "/paths"] {:strs [start dest nodes]}
-         (response/json (->>
-                          {:start start
-                           :dest dest
-                           :nodes nodes}
-                          astar/astar
-                          add-final-state
-                          (map calculate-paths)
-                          filter-keys-for-presentation)))
+(defpage [:post, "/paths"] {:strs [start dest nodes alg cost]}
+         (let [algorithm (case alg
+                           "astar" astar/astar
+                           "dijkstra" astar/dijkstra
+                           "greedy" astar/greedy
+                           astar/astar)
+               cost-fn (case cost
+                         "chebychev" grid/chebychev
+                         "tweaked" grid/weighted-chebychev
+                         "euclidean" grid/euclidean
+                         grid/chebychev)]
+           (prn "using alg" algorithm "cost-fn" cost-fn)
+           (response/json (->>
+                            {:start start
+                             :dest dest
+                             :nodes nodes
+                             :cost-fn cost-fn}
+                            algorithm
+                            add-final-state
+                            (map calculate-paths)
+                            filter-keys-for-presentation))))

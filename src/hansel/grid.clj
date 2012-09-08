@@ -34,17 +34,26 @@
             {}
             (map seq edges))))
 
-(defn- abs [n] (if (< n 0) (- n) n))
-
 (defn chebychev
-  "chebychev or diagonal distance, diagonal is just as cheap as linear movement"
+  "Calculate the chebychev (diagonal) distance between two points"
   [[ax ay] [bx by]]
   (Math/max (Math/abs (- bx ax)) (Math/abs (- by ay))))
 
 (defn weighted-chebychev
-  "attempt to tweak chebychev by having diagonal movement cost just a bit more
-  than straight line movement"
+  "Tweaked chebychev, with diagonal movement cost a tiny bit more than straight
+  line movement so pathfinding prefers straight lines first"
   [[ax ay] [bx by]]
-  (let [dx (abs (- bx ax))
-        dy (abs (- by ay))]
+  (let [dx (Math/abs (- bx ax))
+        dy (Math/abs (- by ay))]
     (+ (- (max dx dy) (min dx dy)) (* (min dx dy) 1.001))))
+
+(defn dot
+  "Dot product of two vectors"
+  [p q]
+  (reduce + (map * p q)))
+
+(defn euclidean
+  "Calulcate the euclidian distance between two points"
+  [p q]
+  (let [v (map - q p)]
+    (Math/sqrt (dot v v))))

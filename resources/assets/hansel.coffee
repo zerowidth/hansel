@@ -19,16 +19,16 @@ $ ->
 
   width = Math.floor(($('#grid-container').width()- 1) / 20)
 
-  window.grid = new Grid 20, width, 10
+  window.grid = new Grid 20, width, 16
   grid.draw()
   window.paths = new Paths 20
   window.nodes = new NodeVisualization 20
 
   window.playback = new Playback grid, paths, nodes
 
-  $('#generate').click ->
+  $('#generate').submit ->
     $.ajax(
-      "/paths",
+      $(this).attr('action'),
       type: 'POST'
       contentType: 'application/json'
       dataType: 'json'
@@ -36,15 +36,17 @@ $ ->
         start: grid.startNode()
         dest: grid.destNode()
         nodes: grid.clearNodes()
+        alg: $('#generate :radio[name=alg]:checked').val()
+        cost: $('#generate :radio[name=cost]:checked').val()
       })
       beforeSend: ->
-        $('#buttons button').hide()
-        $('#buttons p').show()
+        $('#generate').hide()
+        $('#processing').show()
       complete: ->
-        $('#buttons button').show()
-        $('#buttons p').hide()
+        $('#processing').hide()
+      error: ->
+        $('#generate').show()
       success: (data) ->
-        $('#buttons').hide()
         $('#playback').fadeIn ->
           grid.editable false
           playback.reset(data)
@@ -61,12 +63,12 @@ $ ->
     grid.editable true
     $('#playback').hide()
     $('#playback .progress .bar').css("width", "0%")
-    $('#buttons').fadeIn()
+    $('#generate').fadeIn()
     $('#paths').fadeOut()
     $('#node_vis').fadeOut()
     false
 
-  $('#buttons').fadeIn()
+  $('#generate').fadeIn()
 
 class Playback
   constructor: (@grid, @paths, @node_vis) ->
@@ -167,8 +169,8 @@ class Grid
       for x in [0...@width]
         @points.push [x,y,'clear']
 
-    @points[ @width + 1 ][2] = 'start'
-    @points[ (@height - 2) * @width + (@width - 2) ][2] = 'dest'
+    @points[ @width * 2 + 2 ][2] = 'start'
+    @points[ (@height - 3) * @width + (@width - 3) ][2] = 'dest'
 
     # mousedown handled only on the grid
     $('body').mouseup @mouseup
@@ -224,7 +226,6 @@ class Grid
       dest.datum()[2] = 'dest'
 
     @drag = false
-    # console.log @grid().selectAll('rect.closed').data().length
 
   mouseover: (d, i) =>
     return unless @edit

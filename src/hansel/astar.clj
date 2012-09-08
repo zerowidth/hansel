@@ -2,9 +2,10 @@
   (:require [hansel.grid :as grid])
   (:use [clojure.data.priority-map :only [priority-map]]))
 
-(defn- init [nodes start dest cost-fn]
+(defn- init [nodes start dest cost-fn f-score]
   {:neighbors (partial grid/neighbors (set nodes))
    :cost-fn cost-fn
+   :f-score f-score
    :start start
    :dest dest
    :current start
@@ -15,14 +16,14 @@
    :parents {}})
 
 (defn- calculate-new-costs
-  [{:keys [neighbors g-scores closed current dest cost-fn] :as state}]
+  [{:keys [neighbors g-scores closed current dest cost-fn f-score] :as state}]
   (assoc state
          :updates
          (for [node (remove closed (neighbors current))
                :let [node-g (g-scores node)
                      new-g (+ (g-scores current) (cost-fn current node))]
                :when (or (nil? node-g) (< new-g node-g))]
-           {:node node :g new-g :f (+ new-g (* 1.001 (cost-fn node dest)))})))
+           {:node node :g new-g :f (f-score new-g (cost-fn node dest))})))
 
 (defn- update-parents
   [{:keys [parents current updates] :as state}]
@@ -69,6 +70,18 @@
 (defn astar
   "Return a lazy sequence of states for the A* algorithm, given a set of nodes,
   a starting node, and a destination node."
-  [{:keys [nodes start dest cost-fn] :or {cost-fn grid/weighted-chebychev} :as args}]
-  (take-while identity (iterate step (init nodes start dest cost-fn))))
+  [{:keys [nodes start dest cost-fn f-score]
+    :or {cost-fn grid/chebychev
+         f-score (fn [g h] (+ g h))}}]
+  (take-while identity (iterate step (init nodes start dest cost-fn f-score))))
+
+(defn dijkstra
+  "Return a lazy sequence of states for Dijkstra's algorithm"
+  [args]
+  (astar (assoc args :f-score (fn [g h] g))))
+
+(defn greedy
+  "Return a lazy sequence of states for greedy best-first algorithm"
+  [args]
+  (astar (assoc args :f-score (fn [g h] h))))
 

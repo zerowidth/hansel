@@ -6,6 +6,10 @@ Pathfinding in clojure
 
 FIXME
 
+## Tests
+
+    lein midge --lazytest
+
 ## License
 
 Copyright © 2012 Nathan Witmer

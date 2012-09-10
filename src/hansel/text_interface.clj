@@ -29,4 +29,5 @@
         nodes (set (apply concat (vals map-nodes)))]
       {:start start
        :dest dest
-       :nodes nodes}))
+       :nodes nodes
+       :neighbors (partial neighbors (set nodes))}))

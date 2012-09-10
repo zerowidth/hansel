@@ -2,28 +2,16 @@
   (:require [hansel.grid :as grid])
   (:use [clojure.data.priority-map :only [priority-map]]))
 
-(defn- init [nodes start dest cost-fn f-score]
-  {:neighbors (partial grid/neighbors (set nodes))
-   :cost-fn cost-fn
-   :f-score f-score
-   :start start
-   :dest dest
-   :current start
-   :f-scores (priority-map start (cost-fn start dest))
-   :g-scores {start 0}
-   :open #{start}
-   :closed #{}
-   :parents {}})
 
 (defn- calculate-new-costs
-  [{:keys [neighbors g-scores closed current dest cost-fn f-score] :as state}]
+  [{:keys [neighbors g-scores closed current dest cost g-score f-score] :as state}]
   (assoc state
          :updates
          (for [node (remove closed (neighbors current))
                :let [node-g (g-scores node)
-                     new-g (+ (g-scores current) (cost-fn current node))]
+                     new-g (+ (g-scores current) (g-score current node))]
                :when (or (nil? node-g) (< new-g node-g))]
-           {:node node :g new-g :f (f-score new-g (cost-fn node dest))})))
+           {:node node :g new-g :f (f-score new-g (cost node dest))})))
 
 (defn- update-parents
   [{:keys [parents current updates] :as state}]
@@ -68,12 +56,38 @@
       next-closest-as-current)))
 
 (defn astar
-  "Return a lazy sequence of states for the A* algorithm, given a set of nodes,
-  a starting node, and a destination node."
-  [{:keys [nodes start dest cost-fn f-score]
-    :or {cost-fn grid/chebychev
-         f-score (fn [g h] (+ g h))}}]
-  (take-while identity (iterate step (init nodes start dest cost-fn f-score))))
+  "Return a lazy sequence of states for the A* algorithm.
+
+  Required keys are:
+
+    :start         - the starting node
+    :dest          - the destination node
+    :neighbors     - (fn [node]...) to retrieve neighbors of a given node
+
+  Optional keys:
+
+    :cost          - (fn [a b]...) returns the cost between nodes a and b,
+                     defaults to grid/chebychev
+    :f-score       - (fn [g h]...) heuristic function, defaults to (+ g h)
+    :g-score       - (fn [a b]...) distance cost for paths,
+                     defaults to grid/chebychev"
+  [{:keys [start dest neighbors cost f-score g-score]
+    :or {cost grid/chebychev
+         f-score (fn [g h] (+ g h))
+         g-score grid/chebychev}}]
+  (let [init {:start start
+              :dest dest
+              :neighbors neighbors
+              :cost cost
+              :f-score f-score
+              :g-score g-score
+              :current start
+              :f-scores (priority-map start (cost start dest))
+              :g-scores {start 0}
+              :open #{start}
+              :closed #{}
+              :parents {}}]
+    (take-while identity (iterate step init))))
 
 (defn dijkstra
   "Return a lazy sequence of states for Dijkstra's algorithm"

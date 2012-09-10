@@ -67,8 +67,9 @@
            (response/json (->>
                             {:start start
                              :dest dest
-                             :nodes nodes
-                             :cost-fn cost-fn}
+                             :neighbors (partial grid/neighbors (set nodes))
+                             :cost cost-fn
+                             :g-score cost-fn}
                             algorithm
                             add-final-state
                             (map calculate-paths)

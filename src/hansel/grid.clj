@@ -8,20 +8,18 @@
         :when (not= 0 dx dy)]
     [(+ dx x) (+ dy y)]))
 
-(defn- reachable [nodes [x y]]
-  "Return a predicate function that determines if a given node is reachable as a
-  neighbor of node [x y] in nodes."
-  (fn [[new-x new-y]]
-    (if (nodes [new-x new-y])
-      (if (or (= 0 (- new-x x)) (= 0 (- new-y y)))
-        true
-        ; filter out unreachable diagonals:
-        (or (nodes [new-x y]) (nodes [x new-y]))))))
+(defn- reachable [nodes [x y] [new-x new-y]]
+  "Determine if a new node is reachable as a neighbor of node [x y] in nodes."
+  (if (nodes [new-x new-y])
+    (if (or (= 0 (- new-x x)) (= 0 (- new-y y)))
+      true
+      ; filter out unreachable diagonals:
+      (or (nodes [new-x y]) (nodes [x new-y])))))
 
 (defn neighbors
   "Retrieve the neighbors of a given node in nodes, based on a grid."
   [nodes node]
-  (filter (reachable nodes node) (neighbors-for node)))
+  (filter (partial reachable nodes node) (neighbors-for node)))
 
 (defn transitions-for
   "Retrieve the grid-based transitions map for the given list of nodes"

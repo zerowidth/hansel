@@ -52,6 +52,11 @@
     (filter (partial clear-path? grid pos) (available-points grid next-pos))))
 
 (defn available-moves
+  "Return the next available moves given the current position and velocity on a grid"
   [grid [pos v]]
   (map (fn [new-pos] [new-pos (vec (map - new-pos pos))]) (next-reachable grid [pos v])))
 
+(defn cost
+  "Returns a function that applies cost-fn to the position of pos/velocity pairs"
+  [cost-fn]
+  (fn [& args] (apply cost-fn (map first args))))

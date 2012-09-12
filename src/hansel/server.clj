@@ -5,6 +5,7 @@
   (:require [hansel.grid :as grid]
             [hansel.util :as util]
             [hansel.astar :as astar]
+            [hansel.racetrack :as racetrack]
             [noir.server :as server]
             [ring.util.response :as ring-response]
             [noir.response :as response]
@@ -48,29 +49,38 @@
 (defn- calculate-paths [step]
   (assoc step :paths (reverse-parents (:parents step))))
 
-(defn- filter-keys-for-presentation
-  [steps]
-  (map #(select-keys % [:open :closed :current :paths]) steps))
+(defn filter-for-presentation
+  [pos-fn {:keys [open closed current paths]}]
+  {:open (map pos-fn open)
+   :closed (map pos-fn closed)
+   :current (pos-fn current)
+   :paths (map #(map pos-fn %) paths)})
 
-(defpage [:post, "/paths"] {:strs [start dest nodes alg cost]}
+(defpage [:post, "/paths"] {:strs [start dest nodes alg cost racetrack]}
          (let [algorithm (case alg
                            "astar" astar/astar
                            "dijkstra" astar/dijkstra
-                           "greedy" astar/greedy
-                           astar/astar)
-               cost-fn (case cost
-                         "chebychev" grid/chebychev
-                         "tweaked" grid/weighted-chebychev
-                         "euclidean" grid/euclidean
-                         grid/chebychev)]
-           (prn "using alg" algorithm "cost-fn" cost-fn)
-           (response/json (->>
-                            {:start start
-                             :dest dest
-                             :neighbors (partial grid/neighbors (set nodes))
-                             :cost cost-fn
-                             :g-score cost-fn}
-                            algorithm
-                            add-final-state
-                            (map calculate-paths)
-                            filter-keys-for-presentation))))
+                           "greedy" astar/greedy)
+               start-pos (if racetrack [start [0 0]] start)
+               end-pos (if racetrack [dest [0 0]] dest)
+               neighbors (if racetrack
+                           (partial racetrack/available-moves (set nodes))
+                           (partial grid/neighbors (set nodes)))
+               h-score ((if racetrack racetrack/cost identity)
+                          (case cost
+                            "chebychev" grid/chebychev
+                            "tweaked" grid/weighted-chebychev
+                            "euclidean" grid/euclidean))
+               g-score (if racetrack (constantly 1) h-score)
+               pos (if racetrack first identity)]
+           (->>
+             {:start start-pos
+              :dest end-pos
+              :neighbors neighbors
+              :g-score g-score
+              :h-score h-score}
+             algorithm
+             add-final-state
+             (map calculate-paths)
+             (map (partial filter-for-presentation pos))
+             response/json)))

@@ -17,12 +17,14 @@ $ ->
     .attr('id', 'paths')
     .attr('style', 'display:none')
 
-  width = Math.floor(($('#grid-container').width()- 1) / 20)
+  grid_size = 20
 
-  window.grid = new Grid 20, width, 16
+  width = Math.floor(($('#grid-container').width()- 1) / grid_size)
+
+  window.grid = new Grid grid_size, width, 16
   grid.draw()
-  window.paths = new Paths 20
-  window.nodes = new NodeVisualization 20
+  window.paths = new Paths grid_size
+  window.nodes = new NodeVisualization grid_size
 
   window.playback = new Playback grid, paths, nodes
 
@@ -38,6 +40,7 @@ $ ->
         nodes: grid.clearNodes()
         alg: $('#generate :radio[name=alg]:checked').val()
         cost: $('#generate :radio[name=cost]:checked').val()
+        racetrack: $('#generate :checkbox[name=racetrack]:checked').val()
       })
       beforeSend: ->
         $('#generate').hide()
@@ -57,6 +60,7 @@ $ ->
 
   $('#clear').click ->
     grid.clear()
+    false
 
   $('#edit').click =>
     playback.pause()
@@ -322,11 +326,11 @@ class Paths
     [ [x1, y1], [x2, y2] ] = d
     dx = x2 - x1
     dy = y2 - y1
-
-    x1 += 0.2 * dx
-    y1 += 0.2 * dy
-    x2 -= 0.2 * dx
-    y2 -= 0.2 * dy
+    a = Math.sqrt((dx * dx) + (dy * dy))
+    x1 += 0.2 * if a is 0 then 0 else dx/a
+    y1 += 0.2 * if a is 0 then 0 else dy/a
+    x2 -= 0.2 * if a is 0 then 0 else dx/a
+    y2 -= 0.2 * if a is 0 then 0 else dy/a
 
     [ x1 * @grid_size + @grid_size / 2,
       y1 * @grid_size + @grid_size / 2,

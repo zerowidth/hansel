@@ -35,13 +35,13 @@ rect.closed {
 }
 
 #paths line {
-  stroke: #44F;
+  stroke: rgba(64,64,255,0.5);
   stroke-width: 2px;
   stroke-linecap: round;
 }
 
 #arrowhead {
-  fill: #44F;
+  fill: rgba(64,64,255,0.5);
 }
 
 .progress .bar {

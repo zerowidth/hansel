@@ -4,14 +4,14 @@
 
 
 (defn- calculate-new-costs
-  [{:keys [neighbors g-scores closed current dest cost g-score f-score] :as state}]
+  [{:keys [neighbors g-scores closed current dest f-score g-score h-score] :as state}]
   (assoc state
          :updates
          (for [node (remove closed (neighbors current))
                :let [node-g (g-scores node)
                      new-g (+ (g-scores current) (g-score current node))]
                :when (or (nil? node-g) (< new-g node-g))]
-           {:node node :g new-g :f (f-score new-g (cost node dest))})))
+           {:node node :g new-g :f (f-score new-g (h-score node dest))})))
 
 (defn- update-parents
   [{:keys [parents current updates] :as state}]
@@ -66,23 +66,23 @@
 
   Optional keys:
 
-    :cost          - (fn [a b]...) returns the cost between nodes a and b,
-                     defaults to grid/chebychev
     :f-score       - (fn [g h]...) heuristic function, defaults to (+ g h)
     :g-score       - (fn [a b]...) distance cost for paths,
+                     defaults to grid/chebychev
+    :h-score       - (fn [a b]...) distance cost for paths,
                      defaults to grid/chebychev"
-  [{:keys [start dest neighbors cost f-score g-score]
-    :or {cost grid/chebychev
-         f-score (fn [g h] (+ g h))
-         g-score grid/chebychev}}]
+  [{:keys [start dest neighbors f-score g-score h-score]
+    :or {f-score (fn [g h] (+ g h))
+         g-score grid/chebychev
+         h-score grid/chebychev}}]
   (let [init {:start start
               :dest dest
               :neighbors neighbors
-              :cost cost
               :f-score f-score
               :g-score g-score
+              :h-score h-score
               :current start
-              :f-scores (priority-map start (cost start dest))
+              :f-scores (priority-map start (f-score (g-score start dest) (h-score start dest)))
               :g-scores {start 0}
               :open #{start}
               :closed #{}

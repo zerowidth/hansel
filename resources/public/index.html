@@ -22,7 +22,7 @@
         <div class="span6">
 
           <form id="generate" action="/paths" class="form-horizontal" style="display:none">
-            <div class="control-group">
+            <div class="control-group" id="algorithms">
               <label class="control-label">Algorithm</label>
               <div class="controls">
                 <label class="radio">
@@ -38,7 +38,7 @@
               </div>
             </div>
 
-            <div class="control-group">
+            <div id="cost-functions" class="control-group">
               <label class="control-label">Cost Function</label>
               <div class="controls">
                 <label class="radio">
@@ -59,7 +59,7 @@
             <div class="control-group">
               <div class="controls">
                 <label class="checkbox">
-                  <input type="checkbox" name="racetrack" />
+                  <input type="checkbox" id="racetrack" name="racetrack" />
                   Use racetrack movement
                 </label>
               </div>

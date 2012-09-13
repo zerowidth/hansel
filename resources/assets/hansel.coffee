@@ -29,6 +29,7 @@ $ ->
   window.playback = new Playback grid, paths, nodes
 
   $('#generate').submit ->
+    racetrack = $('#racetrack').is(':checked')
     $.ajax(
       $(this).attr('action'),
       type: 'POST'
@@ -38,9 +39,9 @@ $ ->
         start: grid.startNode()
         dest: grid.destNode()
         nodes: grid.clearNodes()
-        alg: $('#generate :radio[name=alg]:checked').val()
+        alg: if racetrack then "astar" else $('#generate :radio[name=alg]:checked').val()
         cost: $('#generate :radio[name=cost]:checked').val()
-        racetrack: $('#generate :checkbox[name=racetrack]:checked').val()
+        racetrack: racetrack
       })
       beforeSend: ->
         $('#generate').hide()
@@ -71,6 +72,14 @@ $ ->
     $('#paths').fadeOut()
     $('#node_vis').fadeOut()
     false
+
+  $('#racetrack').change ->
+    if $(this).is(':checked')
+      $('#algorithms input').attr('disabled', 'disabled')
+      $('#cost-functions input').attr('disabled', 'disabled')
+    else
+      $('#algorithms input').attr('disabled', false)
+      $('#cost-functions input').attr('disabled', false)
 
   $('#generate').fadeIn()
 

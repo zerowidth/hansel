@@ -56,7 +56,12 @@
   [grid [pos v]]
   (map (fn [new-pos] [new-pos (vec (map - new-pos pos))]) (next-reachable grid [pos v])))
 
-(defn cost
-  "Returns a function that applies cost-fn to the position of pos/velocity pairs"
-  [cost-fn]
-  (fn [& args] (apply cost-fn (map first args))))
+(defn- steps-between [pos vel target]
+  (let [delta (if (< pos target) inc dec)
+        comparison (if (< pos target) < >)
+        not-reached? (fn [[p v]] (comparison p target))]
+    (count (take-while not-reached? (iterate (fn [[p v]] [(+ p v) (delta v)]) [pos vel])))))
+
+(defn guess-max-steps [[pos vel] [to _]]
+  (max (steps-between (first pos) (first vel) (first to))
+       (steps-between (second pos) (second vel) (second to))))

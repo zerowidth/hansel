@@ -66,11 +66,12 @@
                neighbors (if racetrack
                            (partial racetrack/available-moves (set nodes))
                            (partial grid/neighbors (set nodes)))
-               h-score ((if racetrack racetrack/cost identity)
-                          (case cost
-                            "chebychev" grid/chebychev
-                            "tweaked" grid/weighted-chebychev
-                            "euclidean" grid/euclidean))
+               h-score (if racetrack
+                         racetrack/guess-max-steps
+                         (case cost
+                           "chebychev" grid/chebychev
+                           "tweaked" grid/weighted-chebychev
+                           "euclidean" grid/euclidean))
                g-score (if racetrack (constantly 1) h-score)
                pos (if racetrack first identity)]
            (->>
@@ -81,6 +82,7 @@
               :h-score h-score}
              algorithm
              add-final-state
+             ((if racetrack (partial take-last 1) identity))
              (map calculate-paths)
              (map (partial filter-for-presentation pos))
              response/json)))

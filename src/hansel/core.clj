@@ -21,8 +21,7 @@
                             :start [(:start graph) [0 0]]
                             :dest [(:dest graph) [0 0]]
                             :g-score (constantly 1)
-                            :h-score (racetrack/cost grid/chebychev)))
-        ]
+                            :h-score racetrack/guess-max-steps))]
     (pprint (path (last steps)))
     ))
 

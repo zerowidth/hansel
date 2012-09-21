@@ -50,6 +50,9 @@
 (defn- calculate-paths [step]
   (assoc step :paths (reverse-parents (:parents step))))
 
+(defn- expand-parents [step]
+  (assoc step :paths (jps/expand-parents (:paths step))))
+
 (defn filter-for-presentation
   [pos-fn {:keys [open closed current paths]}]
   {:open (map pos-fn open)
@@ -87,5 +90,6 @@
              add-final-state
              ((if racetrack (partial take-last 1) identity))
              (map calculate-paths)
+             ((if jps (partial map expand-parents) identity))
              (map (partial filter-for-presentation pos))
              response/json)))

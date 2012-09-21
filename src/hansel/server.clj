@@ -57,15 +57,16 @@
    :paths (map #(map pos-fn %) paths)})
 
 (defpage [:post, "/paths"] {:strs [start dest nodes alg cost racetrack]}
-         (let [algorithm (case alg
+         (let [grid (set nodes)
+               algorithm (case alg
                            "astar" astar/astar
                            "dijkstra" astar/dijkstra
                            "greedy" astar/greedy)
                start-pos (if racetrack [start [0 0]] start)
                end-pos (if racetrack [dest [0 0]] dest)
-               neighbors (if racetrack
-                           (partial racetrack/available-moves (set nodes))
-                           (partial grid/neighbors (set nodes)))
+               neighbors (cond
+                           racetrack (fn [n p] (racetrack/available-moves grid n))
+                           :else (fn [n p] (grid/neighbors grid n)))
                h-score (if racetrack
                          racetrack/guess-max-steps
                          (case cost

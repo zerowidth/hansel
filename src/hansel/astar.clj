@@ -4,10 +4,10 @@
 
 
 (defn- calculate-new-costs
-  [{:keys [neighbors g-scores closed current dest f-score g-score h-score] :as state}]
+  [{:keys [neighbors parents g-scores closed current dest f-score g-score h-score] :as state}]
   (assoc state
          :updates
-         (for [node (remove closed (neighbors current))
+         (for [node (remove closed (neighbors current parents))
                :let [node-g (g-scores node)
                      new-g (+ (g-scores current) (g-score current node))]
                :when (or (nil? node-g) (< new-g node-g))]

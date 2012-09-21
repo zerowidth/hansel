@@ -6,6 +6,7 @@
             [hansel.util :as util]
             [hansel.astar :as astar]
             [hansel.racetrack :as racetrack]
+            [hansel.jps :as jps]
             [noir.server :as server]
             [ring.util.response :as ring-response]
             [noir.response :as response]
@@ -56,7 +57,7 @@
    :current (pos-fn current)
    :paths (map #(map pos-fn %) paths)})
 
-(defpage [:post, "/paths"] {:strs [start dest nodes alg cost racetrack]}
+(defpage [:post, "/paths"] {:strs [start dest nodes alg cost jps racetrack]}
          (let [grid (set nodes)
                algorithm (case alg
                            "astar" astar/astar
@@ -66,6 +67,7 @@
                end-pos (if racetrack [dest [0 0]] dest)
                neighbors (cond
                            racetrack (fn [n p] (racetrack/available-moves grid n))
+                           jps (fn [n p] (jps/successors grid p n dest))
                            :else (fn [n p] (grid/neighbors grid n)))
                h-score (if racetrack
                          racetrack/guess-max-steps

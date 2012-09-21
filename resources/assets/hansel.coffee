@@ -40,6 +40,7 @@ $ ->
         dest: grid.destNode()
         nodes: grid.clearNodes()
         alg: if racetrack then "astar" else $('#generate :radio[name=alg]:checked').val()
+        jps: $('#jps').is(':checked')
         cost: $('#generate :radio[name=cost]:checked').val()
         racetrack: racetrack
       })
